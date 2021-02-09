@@ -7,8 +7,15 @@ using InteractiveUtils
 # ╔═╡ 92b91de6-5fef-11eb-1b89-951c38260bea
 begin
 	ENV["MPLBACKEND"]="Agg"
+	
+	import Pkg
+	
+	Pkg.add("PyPlot")
 	using PyPlot
-	using Calculus, PlutoUI
+	Pkg.add("Calculus")
+	using Calculus
+	Pkg.add("PlutoUI")
+	using PlutoUI
 end
 
 # ╔═╡ 66c10dde-608a-11eb-024e-d7e7ca5c9f53
@@ -25,7 +32,7 @@ md"""
 
 # ╔═╡ 606a94fc-6af1-11eb-2fcd-eb64c6a490e5
 md"""
-## Load and Install Packages
+## System Setup
 """
 
 # ╔═╡ c8e17df0-6aee-11eb-3c5f-fdf095448056
