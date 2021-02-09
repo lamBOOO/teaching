@@ -11,13 +11,10 @@ begin
 	import Pkg
 	Pkg.activate(mktempdir())
 
+	# No python env to use Conda.jl
 	ENV["PYTHON"]=""
 	Pkg.add("PyCall")
 	Pkg.build("PyCall")
-
-	# Pkg.add("Conda")
-	# import Conda
-	# Conda.add("matplotlib")
 
 	Pkg.add("PyPlot")
 	using PyPlot
@@ -41,7 +38,9 @@ md"""
 
 # ╔═╡ 606a94fc-6af1-11eb-2fcd-eb64c6a490e5
 md"""
-## System Setup
+## System Setup for Binder
+
+- See [@lamBOOO/teaching on Github](https://github.com/lamBOOO/teaching)
 """
 
 # ╔═╡ c8e17df0-6aee-11eb-3c5f-fdf095448056
@@ -156,7 +155,7 @@ function visualize(
 	end
 
 	# history
-	hcolors = ["yellow", "lime", "pink"]
+	hcolors = ["yellow", "cyan", "pink"]
 	for (ihist, hist) in enumerate(hists)
 		hist_x = [hist[i][1] for i=1:length(hist)]
 		hist_y = [hist[i][2] for i=1:length(hist)]
@@ -244,11 +243,18 @@ function gradient_descent_wolfe(f, x0, kmax)
 	return x, hist
 end
 
-# ╔═╡ cb4bd08a-6aef-11eb-2ad2-f146750af09c
-hist = gradient_descent_wolfe(x->P(x, p, 1, 2), [1,-1], 20)[2]
-
 # ╔═╡ 665d6f78-6ae8-11eb-2a9e-1b6d0536cb74
-visualize([hist, 1.2 .*hist], p, mins=[[0.113837, 2.10992]])
+visualize([
+		gradient_descent_wolfe(x->P(x, p, 1, 2), [1,1], 30)[2],
+		gradient_descent_wolfe(x->P(x, p, 1, 2), [2.5,-2], 30)[2]
+], p, mins=[[0, 2.1]])
+
+# ╔═╡ b1b0e32e-6af7-11eb-1462-d32d05f84416
+md"""
+## TODO: Implement Barrier Methods
+
+🤷‍♂️
+"""
 
 # ╔═╡ b9370574-608e-11eb-00d2-e134ec05d7db
 md"""
@@ -269,7 +275,6 @@ Questions?
 # ╟─17f43d4c-6aef-11eb-375f-b11b1507d7ac
 # ╠═e38a9a46-6adb-11eb-3be3-794a65028b04
 # ╟─b2f8358c-6aef-11eb-3553-3574676ead99
-# ╠═cb4bd08a-6aef-11eb-2ad2-f146750af09c
 # ╠═665d6f78-6ae8-11eb-2a9e-1b6d0536cb74
 # ╟─af2a5a78-6ae2-11eb-1e12-eb4ff27bfc6a
 # ╟─ddb561e0-608c-11eb-0920-074e5a84724e
@@ -280,4 +285,5 @@ Questions?
 # ╠═bfcac302-5fef-11eb-19ef-bdde45ad188f
 # ╟─29ca1ff8-608d-11eb-2b01-b954fcd2de76
 # ╠═5c83c5e6-5fef-11eb-1a0e-3d9e19a8874b
+# ╟─b1b0e32e-6af7-11eb-1462-d32d05f84416
 # ╟─b9370574-608e-11eb-00d2-e134ec05d7db
