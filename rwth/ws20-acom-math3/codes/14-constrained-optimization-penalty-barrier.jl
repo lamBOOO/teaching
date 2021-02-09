@@ -7,9 +7,18 @@ using InteractiveUtils
 # ╔═╡ 92b91de6-5fef-11eb-1b89-951c38260bea
 begin
 	ENV["MPLBACKEND"]="Agg"
-	
+
 	import Pkg
-	
+	Pkg.activate(mktempdir())
+
+	ENV["PYTHON"]=""
+	Pkg.add("PyCall")
+	Pkg.build("PyCall")
+
+	# Pkg.add("Conda")
+	# import Conda
+	# Conda.add("matplotlib")
+
 	Pkg.add("PyPlot")
 	using PyPlot
 	Pkg.add("Calculus")
@@ -40,7 +49,7 @@ md"""
 ## Define optimization problem
 
 ```math
-\min_{x \in \mathbb{R^n}} f(x) 
+\min_{x \in \mathbb{R^n}} f(x)
 \; \text{s.t.} \;
 \begin{cases}
 g_j(x) \le 0  \; \text{for} \; j=1,\dots,m
@@ -84,7 +93,7 @@ r_p(x) = \sum_{i=1}^{q} {|h_i(x)|}^p + \sum_{j=1}^{m} {|\max(0, g_j(x))|}^p
 function P(x, p::ConstrainedMinimizationProblem, α::Number, pow::Int)
 	@assert α>0
 	r = (
-		reduce(+, [abs(p.h[i](x))^pow for i ∈ 1:length(p.h)], init=0) 
+		reduce(+, [abs(p.h[i](x))^pow for i ∈ 1:length(p.h)], init=0)
 		+ reduce(+, [max(0, p.g[i](x))^pow for i ∈ 1:length(p.g)], init=0)
 	)
 	return p.f(x) + α * r
@@ -98,18 +107,18 @@ md"""
 # ╔═╡ af2a5a78-6ae2-11eb-1e12-eb4ff27bfc6a
 function visualize(
 		hists :: Array{Array{Any, 1}, 1},
-		p :: ConstrainedMinimizationProblem; 
+		p :: ConstrainedMinimizationProblem;
 		mins = [],
 		legend = ["history $(i)" for i=1:length(hists)],
 		title = "",
 	)
-	
+
 	clf()
 	fig, ax = PyPlot.subplots()
 	Δ = 0.1
 	X=collect(-2:Δ:3)
 	Y=collect(-3:Δ:3)
-	
+
 	# objective
 	F=[p.f([X[i],Y[j]]) for j=1:length(Y), i=1:length(X)]
 	# F=[P([X[i], Y[j]], p, 1, 2) for j=1:length(Y), i=1:length(X)]
@@ -134,7 +143,7 @@ function visualize(
 		)
 		ax.clabel(CS2, CS2.levels, inline=true, fontsize=10, fmt="g$(gi)=0")
 	end
-	
+
 	# equality constraints h
 	for hi=1:length(p.h)
 		CS1 = ax.contour(
@@ -145,7 +154,7 @@ function visualize(
 			CS1, CS1.levels, inline=true, fontsize=10, fmt="h$(hi)=0"
 		)
 	end
-	
+
 	# history
 	hcolors = ["yellow", "lime", "pink"]
 	for (ihist, hist) in enumerate(hists)
@@ -155,23 +164,23 @@ function visualize(
 		scatter(hist_x, hist_y, color=hcolors[ihist])
 		for i=1:length(hist_x)
 			annotate(
-				string(i), [hist_x[i], hist_y[i]] + [0.05, 0.05], 
+				string(i), [hist_x[i], hist_y[i]] + [0.05, 0.05],
 				color=hcolors[ihist], zorder=2
 			)
 		end
 	end
-	
+
 	# minima
 	for i=1:length(mins)
 		ax.scatter(mins[i][1], mins[i][2], color="r", s=500, zorder=3, marker="x")
 	end
-	
+
 	# settings
 	PyPlot.title(title)
 	ax.legend(legend)
 	xlabel("x")
 	ylabel("y")
-	
+
 	gcf()
 end
 
