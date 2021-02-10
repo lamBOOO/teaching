@@ -4,6 +4,15 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ 92b91de6-5fef-11eb-1b89-951c38260bea
 begin
 	ENV["MPLBACKEND"]="Agg"
@@ -72,7 +81,7 @@ p = ConstrainedMinimizationProblem(
 		x -> -(x[2]^2 -1.5*x[1]^2 + 2*x[1] - 1),
 		x -> +(x[2]^2 +2*x[1]^2 - 2*x[1] - 4.25),
 	],
-	[x -> x[1]],
+	[x -> 5*(x[1]+x[2])],
 )
 
 # ╔═╡ 17f43d4c-6aef-11eb-375f-b11b1507d7ac
@@ -103,10 +112,18 @@ md"""
 ## Solve and Visualize Convergence History
 """
 
+# ╔═╡ 42a25bd2-6b8a-11eb-30e4-955c53c97eb8
+md"""
+steps = $(@bind steps Slider(1:1:100; default=50, show_value=true)),
+penalty = $(@bind penalty CheckBox(default=false)),
+αp = $(@bind αp Slider(0.1:0.1:10; default=1, show_value=true))
+"""
+
 # ╔═╡ af2a5a78-6ae2-11eb-1e12-eb4ff27bfc6a
 function visualize(
 		hists :: Array{Array{Any, 1}, 1},
 		p :: ConstrainedMinimizationProblem;
+		showotherfunction = nothing,
 		mins = [],
 		legend = ["history $(i)" for i=1:length(hists)],
 		title = "",
@@ -115,12 +132,16 @@ function visualize(
 	clf()
 	fig, ax = PyPlot.subplots()
 	Δ = 0.1
-	X=collect(-2:Δ:3)
-	Y=collect(-3:Δ:3)
+	X=collect(-1.5:Δ:2.5)
+	Y=collect(-2.5:Δ:2.5)
 
 	# objective
-	F=[p.f([X[i],Y[j]]) for j=1:length(Y), i=1:length(X)]
-	# F=[P([X[i], Y[j]], p, 1, 2) for j=1:length(Y), i=1:length(X)]
+	F = nothing
+	if showotherfunction == nothing
+		F=[p.f([X[i],Y[j]]) for j=1:length(Y), i=1:length(X)]
+	else
+		F=[showotherfunction([X[i],Y[j]]) for j=1:length(Y), i=1:length(X)]
+	end
 	contourf(X, Y, F, levels=20)
 
 	# inequality constraints g
@@ -155,7 +176,7 @@ function visualize(
 	end
 
 	# history
-	hcolors = ["yellow", "cyan", "pink"]
+	hcolors = ["yellow", "lime", "deepskyblue", "fuchsia"]
 	for (ihist, hist) in enumerate(hists)
 		hist_x = [hist[i][1] for i=1:length(hist)]
 		hist_y = [hist[i][2] for i=1:length(hist)]
@@ -167,11 +188,15 @@ function visualize(
 				color=hcolors[ihist], zorder=2
 			)
 		end
+		scatter(
+			hist_x[end], hist_y[end], color=hcolors[ihist], 
+			s=50, edgecolor="black", zorder=5, linewidth=2
+		)
 	end
 
 	# minima
 	for i=1:length(mins)
-		ax.scatter(mins[i][1], mins[i][2], color="r", s=500, zorder=3, marker="x")
+		ax.scatter(mins[i][1], mins[i][2], color="r", s=500, zorder=6, marker="x")
 	end
 
 	# settings
@@ -216,11 +241,11 @@ md"""
 wolfe1(f, d, x, α) = f(x + α*d) <= f(x) + 1E-4 * α * derivative(f, x)' * d
 
 # ╔═╡ 28aa6a7a-6af0-11eb-0880-8ffcba817081
-wolfe2(f, d, x, α) = derivative(f, x+α*d)' * d >= 0.9 * derivative(f, x)' * d
+wolfe2(f, d, x, α) = derivative(f, x+α*d)' * d >= 0.99 * derivative(f, x)' * d
 
 # ╔═╡ bfcac302-5fef-11eb-19ef-bdde45ad188f
 function backtracking_linesearch_wolfe(f, x, d, αmax, β)
-	@assert wolfe2(f, d, x, backtracking_linesearch(f, x, d, αmax, wolfe1, β))
+	# @assert wolfe2(f, d, x, backtracking_linesearch(f, x, d, αmax, wolfe1, β))
 	return backtracking_linesearch(f, x, d, αmax, wolfe1, β)
 end
 
@@ -236,7 +261,7 @@ function gradient_descent_wolfe(f, x0, kmax)
 	push!(hist, x)
 	for k=1:kmax
 		x = x + backtracking_linesearch_wolfe(
-			f, x, -derivative(f, x), 10, 0.5
+			f, x, -derivative(f, x), 1, 0.9
 		) * -derivative(f, x)
 		push!(hist, x)
 	end
@@ -245,24 +270,34 @@ end
 
 # ╔═╡ 665d6f78-6ae8-11eb-2a9e-1b6d0536cb74
 visualize([
-		gradient_descent_wolfe(x->P(x, p, 1, 2), [1,1], 30)[2],
-		gradient_descent_wolfe(x->P(x, p, 1, 2), [2.5,-2], 30)[2]
-], p, mins=[[0, 2.1]])
+		gradient_descent_wolfe(x->P(x, p, 1, 1), [1,2], steps)[2],
+		gradient_descent_wolfe(x->P(x, p, 10, 1), [1,2], steps)[2],
+], p, legend = ["1-power, α=1", "1-power, α=10"],
+	showotherfunction = if penalty x->P(x, p, αp, 1) else nothing end
+)
 
 # ╔═╡ b1b0e32e-6af7-11eb-1462-d32d05f84416
 md"""
 ## TODO: Implement Barrier Methods
-
-🤷‍♂️
 """
 
 # ╔═╡ b9370574-608e-11eb-00d2-e134ec05d7db
 md"""
-## See you next week ✌️
+## See you $(html\"<span style='color:#FF0000';>NOT</span>\") next week ✌️
 
 Questions?
 
+!!! danger "Exercises over"
+
+    This was the last exercise on Wednesday 
+
+!!! tip "Exam Questions Session"
+
+    15.03.21 15:00 Exam Questions Session (see Moodle)
+
 """
+
+
 
 # ╔═╡ Cell order:
 # ╟─66c10dde-608a-11eb-024e-d7e7ca5c9f53
@@ -275,6 +310,7 @@ Questions?
 # ╟─17f43d4c-6aef-11eb-375f-b11b1507d7ac
 # ╠═e38a9a46-6adb-11eb-3be3-794a65028b04
 # ╟─b2f8358c-6aef-11eb-3553-3574676ead99
+# ╟─42a25bd2-6b8a-11eb-30e4-955c53c97eb8
 # ╠═665d6f78-6ae8-11eb-2a9e-1b6d0536cb74
 # ╟─af2a5a78-6ae2-11eb-1e12-eb4ff27bfc6a
 # ╟─ddb561e0-608c-11eb-0920-074e5a84724e
