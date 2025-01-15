@@ -111,7 +111,7 @@ md"""
 """
 
 # ╔═╡ 08ad3e7c-5a75-11eb-208a-a509dbe12e6e
-newton(f, 1., (x->1.0), 100) # works well 😎
+newton(f, 1., (x->1.5), 100) # works well 😎
 
 # ╔═╡ adf08aac-5a79-11eb-15c7-8171dd96e851
 newton(f, 1., (x->3.0), 100) # diverged 😓
@@ -123,7 +123,7 @@ md"""
 
 # ╔═╡ 00231932-5a77-11eb-1e22-9b0237c2490e
 begin
-	res_n = newton(f, 1., (x->0.4), 5)
+	res_n = newton(f, 1., (x->1.5), 5)
 	Gadfly.plot(
 		Guide.title("Newton Algorithm"),
 		layer(f, minimum(res_n[2]), maximum(res_n[2])),
@@ -133,7 +133,7 @@ end
 
 # ╔═╡ e3a00fa6-5a79-11eb-1ada-a1695a4e237b
 begin
-	res_gd = gradient_descent(f, 1., (x->0.4), 5)
+	res_gd = gradient_descent(f, 1., (x->1.5), 5)
 	Gadfly.plot(
 		Guide.title("Gradient Descent Algorithm"),
 		layer(f, minimum(res_gd[2]), maximum(res_gd[2])),
@@ -187,15 +187,15 @@ begin
 	b = 100
 	h = (x -> (a-x[1])^2 + b*(x[2]-x[1]^2)^2)
 
-	x0 = [-1.0,0.]
+	x0 = [-1.0,0.5]
 
 	# Gradient Descent
-	res_gd_2d_rb = gradient_descent(h, x0, (x->0.003), 10)
+	res_gd_2d_rb = gradient_descent(h, x0, (x->0.003), 20)
 	res_gd_2d_rb_x = [res_gd_2d_rb[2][i][1] for i=1:length(res_gd_2d_rb[2])]
 	res_gd_2d_rb_y = [res_gd_2d_rb[2][i][2] for i=1:length(res_gd_2d_rb[2])]
 
 	# Newton
-	res_n_2d_rb = newton(h, x0, (x->0.9), 10)
+	res_n_2d_rb = newton(h, x0, (x->0.9), 50)
 	res_n_2d_rb_x = [res_n_2d_rb[2][i][1] for i=1:length(res_n_2d_rb[2])]
 	res_n_2d_rb_y = [res_n_2d_rb[2][i][2] for i=1:length(res_n_2d_rb[2])]
 
@@ -208,20 +208,21 @@ begin
 	PyPlot.title("Rosenbrock: Gradient Descent vs. Newton")
 
 	# res_gd_2d_rb
-	PyPlot.plot(res_gd_2d_rb_x, res_gd_2d_rb_y, color="yellow")
-	scatter(res_gd_2d_rb_x, res_gd_2d_rb_y, color="yellow")
+	PyPlot.plot(res_gd_2d_rb_x, res_gd_2d_rb_y, color="yellow", label="Gradient Descent")
+	PyPlot.scatter(res_gd_2d_rb_x, res_gd_2d_rb_y, color="yellow")
 	for i=1:length(res_gd_2d_rb_x)
 		annotate(string(i), [res_gd_2d_rb_x[i], res_gd_2d_rb_y[i]], color="w", zorder=2)
 	end
 
 	# res_n_2d_rb
-	PyPlot.plot(res_n_2d_rb_x, res_n_2d_rb_y, color="red")
-	scatter(res_n_2d_rb_x, res_n_2d_rb_y, color="red")
+	PyPlot.plot(res_n_2d_rb_x, res_n_2d_rb_y, color="red", label="Newton")
+	PyPlot.scatter(res_n_2d_rb_x, res_n_2d_rb_y, color="red")
 	for i=1:length(res_n_2d_rb_x)
 		annotate(string(i), [res_n_2d_rb_x[i], res_n_2d_rb_y[i]], color="w", zorder=2)
 	end
 
-	legend(["Gradient Descent", "Newton"])
+	# legend(["Gradient Descent", "Newton"])
+	legend()
 
 	xlabel("x")
 	ylabel("y")
@@ -1103,7 +1104,7 @@ version = "17.4.0+2"
 # ╠═3f9451ea-5a7b-11eb-15c3-f7be154ca0f1
 # ╠═1ad70922-5a7b-11eb-1834-6d781d2e6d0a
 # ╟─6ca5ad54-5af9-11eb-3e33-d91c9c54484c
-# ╠═8999380a-5af8-11eb-047f-7d4006b15f48
+# ╟─8999380a-5af8-11eb-047f-7d4006b15f48
 # ╟─903963e2-5b02-11eb-3518-27fbab536dd9
 # ╠═9b20248a-5af8-11eb-2078-6b7283933b8d
 # ╟─2e1394a2-38c0-41ba-b5cf-131d8c3ace81
